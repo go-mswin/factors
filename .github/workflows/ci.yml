@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # A workflow that fails to PARSE reports nothing at all: no jobs run, no
+  # checks appear, and the pull request looks unexercised rather than broken.
+  actionlint:
+    name: workflows parse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: actionlint
+        run: |
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
+
+  windows:
+    name: windows (the real target, CGO=0)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      CGO_ENABLED: "0"
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Gofmt
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - name: Tidy is committed
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+      - name: Vet
+        run: go vet ./...
+      # A runner has no Windows Hello enrolled and nobody to touch a key, so
+      # the platform half never runs here. The coverage GATE lives on the linux
+      # lane, over everything that needs no prompt.
+      - name: Test
+        run: go test ./...
+
+  linux:
+    name: linux (coverage gate on everything that needs no prompt)
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: "0"
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test -coverprofile=cover.out .
+      - name: 100% gate
+        run: |
+          go tool cover -func=cover.out | tee full.txt
+          if grep -v '100\.0%' full.txt | grep -v '^total:'; then
+            echo "::error::below 100% (lines above)"; exit 1
+          fi
+      - name: Race
+        run: CGO_ENABLED=1 go test -race ./...
+
+  darwin:
+    name: darwin (stub build)
+    runs-on: macos-latest
+    env:
+      CGO_ENABLED: "0"
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Build
+        run: go build ./...
+      - name: Test
+        run: go test ./...
+
+  crossbuild:
+    name: cross-build every architecture Windows runs on
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: "0"
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Build
+        run: |
+          for arch in amd64 arm64 386; do
+            echo "--- windows/$arch"
+            GOOS=windows GOARCH="$arch" go build ./... || exit 1
+          done
