@@ -13,7 +13,7 @@
 //
 //	r, err := mfa.Verify(ctx, mfa.Policy{Count: 2},
 //	    factors.WindowsHello("unlock the vault"),
-//	    factors.SecurityKey("example.test", credentialID),
+//	    factors.SecurityKey("example.test", credentialID, publicKey),
 //	)
 //
 // # ⛔ Windows cannot offer an inherence factor
@@ -43,6 +43,8 @@ package factors
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"errors"
 	"fmt"
 
@@ -76,6 +78,9 @@ type keyFactor struct {
 	rpID       string
 	origin     string
 	credential []byte
+	// publicKey is the credential's, from its registration: what the
+	// assertion's signature is checked with.
+	publicKey *ecdsa.PublicKey
 	// verify demands that the authenticator establish WHO is holding the key
 	// -- its PIN or its own sensor -- not merely that somebody touched it.
 	verify bool
@@ -89,10 +94,18 @@ type keyFactor struct {
 // with the machine itself, and "something you have" would mean the computer
 // already in front of the person.
 //
-// credentialID is what a registration returned. Registering is not done here;
-// see go-mswin/webauthn.
-func SecurityKey(rpID string, credentialID []byte) mfa.Factor {
-	return keyFactor{rpID: rpID, origin: "https://" + rpID, credential: credentialID}
+// credentialID and publicKey are what a registration returned: the
+// credential's id and its P-256 public key. Registering is not done here; see
+// go-mswin/webauthn.
+//
+// ⛔ The public key is required, and the assertion is VERIFIED with it: its
+// signature over the authenticator data and the client data, the relying
+// party hash, the challenge, the credential. Before, only the flags the
+// authenticator reported were read, so any device that answered -- a
+// programmable USB board -- passed as the key (the go-authn/keyfactor
+// security audit found the same in the CTAP path).
+func SecurityKey(rpID string, credentialID []byte, publicKey *ecdsa.PublicKey) mfa.Factor {
+	return keyFactor{rpID: rpID, origin: "https://" + rpID, credential: credentialID, publicKey: publicKey}
 }
 
 // VerifiedSecurityKey is the same, with the key asked to establish who holds
@@ -102,8 +115,8 @@ func SecurityKey(rpID string, credentialID []byte) mfa.Factor {
 // fingerprint reader -- never reaches this machine and identifies nobody to
 // us; it protects the key. Counting it as a second factor would let one object
 // masquerade as two.
-func VerifiedSecurityKey(rpID string, credentialID []byte) mfa.Factor {
-	f := SecurityKey(rpID, credentialID).(keyFactor)
+func VerifiedSecurityKey(rpID string, credentialID []byte, publicKey *ecdsa.PublicKey) mfa.Factor {
+	f := SecurityKey(rpID, credentialID, publicKey).(keyFactor)
 	f.verify = true
 	return f
 }
@@ -163,6 +176,9 @@ func (f keyFactor) Verify(ctx context.Context) error {
 	}
 	if f.origin == "" {
 		return errors.New("factors: a security key needs an origin")
+	}
+	if f.publicKey == nil || f.publicKey.Curve != elliptic.P256() {
+		return errors.New("factors: a security key needs its credential's P-256 public key, or nothing could check what it signs")
 	}
 	return askKey(ctx, f)
 }
