@@ -35,7 +35,7 @@ func swap(t *testing.T, hello func(context.Context, string) error, key func(cont
 // factors, and that is the honest answer rather than a bug.
 func TestWindowsCannotOfferAnInherenceFactor(t *testing.T) {
 	hello := WindowsHello("unlock the vault")
-	key := SecurityKey("example.test", []byte("cred"))
+	key := SecurityKey("example.test", []byte("cred"), testKey)
 
 	if hello.Kind() != mfa.Unknown {
 		t.Errorf("Windows Hello claims %v; Windows never says which modality was used", hello.Kind())
@@ -61,10 +61,10 @@ func TestWindowsCannotOfferAnInherenceFactor(t *testing.T) {
 // TestAPINOnTheKeyIsNotASecondFactor. Whatever the key asked for never reaches
 // this machine and identifies nobody to us; it protects the key.
 func TestAPINOnTheKeyIsNotASecondFactor(t *testing.T) {
-	if got := VerifiedSecurityKey("example.test", []byte("c")).Kind(); got != mfa.Possession {
+	if got := VerifiedSecurityKey("example.test", []byte("c"), testKey).Kind(); got != mfa.Possession {
 		t.Errorf("a verified key is %v, want possession", got)
 	}
-	if !strings.Contains(VerifiedSecurityKey("e.test", nil).Name(), "PIN") {
+	if !strings.Contains(VerifiedSecurityKey("e.test", nil, testKey).Name(), "PIN") {
 		t.Error("the verified factor does not say what it will ask for")
 	}
 }
@@ -77,7 +77,7 @@ func TestNothingHereToAskIsNotAFailure(t *testing.T) {
 		func(context.Context, keyFactor) error { return unavailable(errors.New("no key")) })
 
 	r, err := mfa.Verify(context.Background(), mfa.Policy{Count: 1},
-		WindowsHello("unlock"), SecurityKey("example.test", nil))
+		WindowsHello("unlock"), SecurityKey("example.test", nil, testKey))
 	if err == nil {
 		t.Fatal("a machine with neither factor satisfied a policy")
 	}
@@ -90,7 +90,7 @@ func TestNothingHereToAskIsNotAFailure(t *testing.T) {
 	swap(t, nil, func(context.Context, keyFactor) error { return nil })
 	if _, err := mfa.Verify(context.Background(),
 		mfa.Policy{Count: 1, StopOnFirstFailure: true},
-		WindowsHello("unlock"), SecurityKey("example.test", nil)); err != nil {
+		WindowsHello("unlock"), SecurityKey("example.test", nil, testKey)); err != nil {
 		t.Errorf("an absent Hello ended the attempt: %v", err)
 	}
 }
@@ -99,7 +99,7 @@ func TestARefusalIsARefusal(t *testing.T) {
 	swap(t, func(context.Context, string) error { return errors.New("Windows Hello: Canceled") },
 		func(context.Context, keyFactor) error { return errors.New("nobody touched it") })
 	r, err := mfa.Verify(context.Background(), mfa.Policy{Count: 1},
-		WindowsHello("unlock"), SecurityKey("example.test", nil))
+		WindowsHello("unlock"), SecurityKey("example.test", nil, testKey))
 	if err == nil {
 		t.Fatal("two refusals satisfied a policy")
 	}
@@ -124,8 +124,8 @@ func TestAFactorRefusesAnIncompleteRequest(t *testing.T) {
 		want string
 	}{
 		{"a prompt with no reason", WindowsHello(""), "needs a reason"},
-		{"a key with no relying party", SecurityKey("", nil), "relying party id"},
-		{"a key with no origin", WithOrigin(SecurityKey("e.test", nil), ""), "needs an origin"},
+		{"a key with no relying party", SecurityKey("", nil, testKey), "relying party id"},
+		{"a key with no origin", WithOrigin(SecurityKey("e.test", nil, testKey), ""), "needs an origin"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			err := c.f.Verify(context.Background())
@@ -149,13 +149,13 @@ func TestTheOriginDefaultsToTheRelyingParty(t *testing.T) {
 	var seen keyFactor
 	swap(t, nil, func(_ context.Context, f keyFactor) error { seen = f; return nil })
 
-	if err := SecurityKey("example.test", nil).Verify(context.Background()); err != nil {
+	if err := SecurityKey("example.test", nil, testKey).Verify(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 	if seen.origin != "https://example.test" {
 		t.Errorf("origin defaulted to %q", seen.origin)
 	}
-	if err := WithOrigin(SecurityKey("example.test", nil), "https://login.example.test").
+	if err := WithOrigin(SecurityKey("example.test", nil, testKey), "https://login.example.test").
 		Verify(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -177,13 +177,13 @@ func TestTheVerifiedFactorAsksForVerification(t *testing.T) {
 	var seen keyFactor
 	swap(t, nil, func(_ context.Context, f keyFactor) error { seen = f; return nil })
 
-	if err := SecurityKey("e.test", nil).Verify(context.Background()); err != nil {
+	if err := SecurityKey("e.test", nil, testKey).Verify(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 	if seen.verify {
 		t.Error("a plain security key asked for verification")
 	}
-	if err := VerifiedSecurityKey("e.test", nil).Verify(context.Background()); err != nil {
+	if err := VerifiedSecurityKey("e.test", nil, testKey).Verify(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 	if !seen.verify {
@@ -197,7 +197,7 @@ func TestTheFactorsSayWhatTheyAre(t *testing.T) {
 		want string
 	}{
 		{WindowsHello("x"), "Windows Hello"},
-		{SecurityKey("a", nil), "security key"},
+		{SecurityKey("a", nil, testKey), "security key"},
 	} {
 		if !strings.Contains(c.f.Name(), c.want) {
 			t.Errorf("Name() = %q, want it to mention %q", c.f.Name(), c.want)

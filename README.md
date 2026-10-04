@@ -11,7 +11,7 @@ Go, `CGO_ENABLED=0`.
 ```go
 r, err := mfa.Verify(ctx, mfa.Policy{Count: 2},
     factors.WindowsHello("unlock the vault"),        // go-mswin/winrt
-    factors.SecurityKey("example.test", credID),     // go-mswin/webauthn
+    factors.SecurityKey("example.test", credID, pubKey), // go-mswin/webauthn
 )
 ```
 
@@ -73,12 +73,16 @@ and that is left alone rather than guessed at.
   `Possession`: whatever the key asked for never reaches this machine and
   identifies nobody to us — it protects the key. Counting it separately would
   let one object masquerade as two factors.
+- **The assertion is verified, not believed.** Since v0.3.0 a security key
+  factor takes the credential's public key, and checks the signature over the
+  authenticator data and the client data, the relying party hash, the
+  challenge, the origin, and the credential. Before, only the flags were read,
+  so any device that answered — a programmable USB board — passed as the key
+  (the go-authn/keyfactor security audit found the same in the CTAP path).
 - **The key must say a person was there.** The `UP` flag is checked, and `UV`
-  when verification was asked for. Windows answering is not the same as
-  somebody touching something.
-- **The challenge is random.** This factor does not verify the signature, so
-  there is no protocol to bind a challenge to — and a fixed one would let a
-  recorded assertion be replayed here for ever.
+  when verification was asked for — in the signed bytes, after the signature.
+- **The challenge is random**, and the signed client data must carry it: a
+  recorded assertion cannot be replayed here.
 
 ## Coverage
 

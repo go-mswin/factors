@@ -19,7 +19,7 @@ import (
 func TestOffWindowsBothFactorsAreAbsent(t *testing.T) {
 	for _, f := range []mfa.Factor{
 		WindowsHello("unlock"),
-		SecurityKey("example.test", nil),
+		SecurityKey("example.test", nil, testKey),
 	} {
 		err := f.Verify(context.Background())
 		if err == nil {

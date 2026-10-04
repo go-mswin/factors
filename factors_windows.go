@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 
-	authn "github.com/go-authn/fido"
 	"github.com/go-authn/mfa"
 	"github.com/go-mswin/webauthn"
 	"github.com/go-mswin/winrt"
@@ -48,10 +47,8 @@ func platformAskHello(ctx context.Context, reason string) error {
 
 // platformAskKey asks a security key for an assertion, through Windows.
 //
-// The challenge is random. Nothing here verifies the signature, so there is no
-// protocol to bind one to -- and a FIXED challenge would let a recorded
-// assertion be replayed at this function for ever. A caller who needs a
-// VERIFIABLE assertion should use go-mswin/webauthn directly and check it.
+// The challenge is random, and the signed client data must carry it: a
+// recorded assertion cannot be replayed at this function.
 func platformAskKey(ctx context.Context, f keyFactor) error {
 	var challenge [sha256.Size]byte
 	if _, err := rand.Read(challenge[:]); err != nil {
@@ -86,17 +83,11 @@ func platformAskKey(ctx context.Context, f keyFactor) error {
 		return err
 	}
 
-	// Windows answering is not enough: the authenticator must say a person was
-	// there, and -- when asked to -- that it established who.
-	ad, err := authn.ParseAuthData(a.AuthenticatorData)
-	if err != nil {
-		return fmt.Errorf("factors: %s answered with authenticator data this cannot read: %w", f.Name(), err)
-	}
-	if !ad.Flags.Has(authn.FlagUP) {
-		return fmt.Errorf("factors: %s answered without anyone touching it", f.Name())
-	}
-	if f.verify && !ad.Flags.Has(authn.FlagUV) {
-		return fmt.Errorf("factors: %s was asked to establish who holds it and did not", f.Name())
+	// Windows answering is not enough: the assertion is verified against the
+	// credential's public key, and then the authenticator must say a person
+	// was there and -- when asked to -- that it established who.
+	if err := checkAssertion(f, challenge[:], a.AuthenticatorData, a.ClientDataJSON, a.Signature, a.CredentialID); err != nil {
+		return err
 	}
 
 	// The constraint was a REQUEST; this is an observation, and they can
