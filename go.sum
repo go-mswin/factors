@@ -2,12 +2,12 @@ github.com/fxamacker/cbor/v2 v2.9.4 h1:xwjVlxEMR3S605oUlgBjKLTTeGFciYPGYCtF/35LK
 github.com/fxamacker/cbor/v2 v2.9.4/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/go-authn/fido v0.6.0 h1:qdrpx7NtyHAuF7uiYDw22obcHeF0ZjlIlR0K1s1G2PY=
 github.com/go-authn/fido v0.6.0/go.mod h1:W92gyfbs3S8rPBpbT8vFOZqQBoL00Y1k+bjqwLp2Srw=
-github.com/go-authn/mfa v0.4.0 h1:4zVSpYR/y7k2lf7KVJmkpshXFN5Uq3sjROOuZ/Jgjso=
-github.com/go-authn/mfa v0.4.0/go.mod h1:wPN7SA2sguNCNUjePafkN6BvO9LFc82PRR3bLwboR6I=
-github.com/go-mswin/webauthn v0.2.0 h1:aV1iItA+5WMwlglJgup1vTQCdoiGsXokyPVzKWyTJDQ=
-github.com/go-mswin/webauthn v0.2.0/go.mod h1:XLO/V+ZHFMvihXV181sH7qH6trhg0xTNddur9T+Pg4I=
-github.com/go-mswin/winrt v0.2.0 h1:NUL3AmpMouyS1b/QVPrl3DA3cnrQQs/5kA0MawxQ8+U=
-github.com/go-mswin/winrt v0.2.0/go.mod h1:dy1gyfXQt+aiwqd/x+6EwA1yM9BLLZte7M+Cw4tDDu0=
+github.com/go-authn/mfa v0.5.0 h1:9HkcmhBmoTIS+2yD6gvtFMPzi19tjuElEdBXXXBLwuo=
+github.com/go-authn/mfa v0.5.0/go.mod h1:gXW2ygHUIq0dbkDK5ZwtngATc2cSpTuszcin6KAqjWA=
+github.com/go-mswin/webauthn v0.4.0 h1:QuZUiti8HyONeWpR/8OPnX99sw5Q+uMAQfsA39ZN6YY=
+github.com/go-mswin/webauthn v0.4.0/go.mod h1:/944Yd9c0Xq2Fx7taUTrXkUjkmW3QfDwYkB3JenQITk=
+github.com/go-mswin/winrt v0.4.0 h1:FMW0KlpMXpB7A/GRPmCCVG/yMUQK55yNcMtZ1k67Y5s=
+github.com/go-mswin/winrt v0.4.0/go.mod h1:3B9HIpJaRz9A3nqNcxi59giVWo9g6/ZLJ419nnycRg8=
 github.com/go-ole/go-ole v1.3.0 h1:Dt6ye7+vXGIKZ7Xtk4s6/xVdGDQynvom7xCFEdWr6uE=
 github.com/go-ole/go-ole v1.3.0/go.mod h1:5LS6F96DhAwUc7C+1HLexzMXY1xGRSryjyPPKW6zv78=
 github.com/saltosystems/winrt-go v0.0.0-20260513072510-45f10383b2b8 h1:CpUxfPAWwKKHDCH8tKBzAe6lC3c2mDVspXPP10Z+4IQ=
@@ -15,5 +15,5 @@ github.com/saltosystems/winrt-go v0.0.0-20260513072510-45f10383b2b8/go.mod h1:CI
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 golang.org/x/sys v0.1.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.47.0 h1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=
-golang.org/x/sys v0.47.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
+golang.org/x/sys v0.48.0 h1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=
+golang.org/x/sys v0.48.0/go.mod h1:hNLxWAXmnKAxqDtdwIYC4bM9oQPEecfsnNMuSxOs3og=
