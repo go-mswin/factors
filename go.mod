@@ -3,14 +3,14 @@ module github.com/go-mswin/factors
 go 1.27.1
 
 require (
-	github.com/go-authn/fido v0.6.0
+	github.com/go-authn/fido v0.6.1
 	github.com/go-authn/mfa v0.5.0
 	github.com/go-mswin/webauthn v0.4.0
 	github.com/go-mswin/winrt v0.4.0
 )
 
 require (
-	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
+	github.com/fxamacker/cbor/v2 v2.9.6 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/saltosystems/winrt-go v0.0.0-20260513072510-45f10383b2b8 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
