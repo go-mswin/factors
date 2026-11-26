@@ -3,7 +3,7 @@ module github.com/go-mswin/factors
 go 1.27.4
 
 require (
-	github.com/go-authn/fido v0.15.0
+	github.com/go-authn/fido v0.16.0
 	github.com/go-authn/mfa v0.5.1
 	github.com/go-mswin/webauthn v0.5.0
 	github.com/go-mswin/winrt v0.4.0
